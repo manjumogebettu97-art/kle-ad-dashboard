@@ -2,7 +2,6 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePlatform } from '../context/PlatformContext';
-import BrandMark from './GoogleAdsLogo';
 
 export default function Navbar() {
   const { user, logout, isAdmin } = useAuth();
@@ -17,13 +16,11 @@ export default function Navbar() {
   return (
     <nav style={styles.nav}>
       <div style={styles.brand}>
-        <BrandMark
-          size={36}
-          withText
-          secondaryText={`${theme.name} Dashboard`}
-          textColor="#202124"
-          palette={theme.logo}
-        />
+        <img src="/kle-university-logo.png" alt="KLE Academy" style={styles.brandLogo} />
+        <span style={styles.brandCopy}>
+          <span style={styles.brandTitle}>KLE Academy</span>
+          <span style={styles.brandSubtitle}>{theme.name} Dashboard</span>
+        </span>
       </div>
 
       <div style={styles.links}>
@@ -109,7 +106,35 @@ const styles = {
   brand: {
     display: 'flex',
     alignItems: 'center',
+    gap: '.65rem',
     marginRight: '.5rem',
+    minWidth: 210,
+  },
+  brandLogo: {
+    width: 36,
+    height: 46,
+    objectFit: 'contain',
+    display: 'block',
+    flexShrink: 0,
+  },
+  brandCopy: {
+    display: 'inline-flex',
+    flexDirection: 'column',
+    lineHeight: 1.15,
+    minWidth: 0,
+  },
+  brandTitle: {
+    fontWeight: 600,
+    fontSize: '.95rem',
+    color: '#202124',
+    letterSpacing: 0,
+    whiteSpace: 'nowrap',
+  },
+  brandSubtitle: {
+    marginTop: 2,
+    fontSize: '.72rem',
+    color: '#5F6368',
+    whiteSpace: 'nowrap',
   },
   links: {
     display: 'flex',
