@@ -16,9 +16,9 @@ export default function Navbar() {
   return (
     <nav style={styles.nav}>
       <div style={styles.brand}>
-        <img src="/kle-university-logo.png" alt="KLE Academy" style={styles.brandLogo} />
+        <img src="/kle-university-logo.png" alt="KLE Academy of Higher Education & Research" style={styles.brandLogo} />
         <span style={styles.brandCopy}>
-          <span style={styles.brandTitle}>KLE Academy</span>
+          <span style={styles.brandTitle}>KLE Academy of Higher Education &amp; Research</span>
           <span style={styles.brandSubtitle}>{theme.name} Dashboard</span>
         </span>
       </div>
@@ -108,7 +108,7 @@ const styles = {
     alignItems: 'center',
     gap: '.65rem',
     marginRight: '.5rem',
-    minWidth: 210,
+    minWidth: 330,
   },
   brandLogo: {
     width: 36,
@@ -125,7 +125,7 @@ const styles = {
   },
   brandTitle: {
     fontWeight: 600,
-    fontSize: '.95rem',
+    fontSize: '.82rem',
     color: '#202124',
     letterSpacing: 0,
     whiteSpace: 'nowrap',
