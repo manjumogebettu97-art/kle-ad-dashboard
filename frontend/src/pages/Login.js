@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import BrandMark from '../components/GoogleAdsLogo';
 
 export default function Login() {
   const { login } = useAuth();
@@ -30,9 +29,13 @@ export default function Login() {
         {/* Logo / brand */}
         <div style={styles.brand}>
           <div style={styles.logoWrap}>
-            <BrandMark size={56} />
+            <img
+              src="/kle-university-logo.png"
+              alt="KLE Academy of Higher Education & Research"
+              style={styles.logo}
+            />
           </div>
-          <h1 style={styles.title}>KLE Academy</h1>
+          <h1 style={styles.title}>KLE Academy of Higher Education &amp; Research</h1>
           <p style={styles.subtitle}>NIRF Campaign Dashboard — sign in to continue</p>
         </div>
 
@@ -105,8 +108,15 @@ const styles = {
     justifyContent: 'center',
     marginBottom: '.75rem',
   },
+  logo: {
+    width: 72,
+    height: 92,
+    objectFit: 'contain',
+    display: 'block',
+  },
   title: {
-    fontSize: '1.375rem',
+    fontSize: '1.25rem',
+    lineHeight: 1.25,
     fontWeight: 700,
     color: '#0f172a',
     marginBottom: '.25rem',
