@@ -8,7 +8,7 @@ const IMPORTS_DIR = path.join(__dirname, '../../data/imports');
 
 const YOUTUBE_PRESENTATION_TOTALS = {
   impressions: 4710000,
-  cost: 406290.11,
+  cost: 404717.70,
   clicks: 32621,
   viewable_impressions: 2171854,
   viewable_ctr: 46.11,
@@ -83,13 +83,13 @@ const DISPLAY_PRIORITY_LOCATIONS = [
 const DISPLAY_PRESENTATION_TOTALS = {
   impressions: 13487642,
   clicks: 12488,
-  cost: 401146.71,
+  cost: 399594.21,
   viewable_impressions: 11683342,
 };
 
 const LINKEDIN_PRESENTATION_SPEND = {
-  image: 505493,
-  video: 495783,
+  image: 503536.66,
+  video: 493864.25,
 };
 
 // Folder name convention: <platform>-<sub_platform>  e.g. google-display, linkedin-sponsored
