@@ -8,7 +8,7 @@ const IMPORTS_DIR = path.join(__dirname, '../../data/imports');
 
 const YOUTUBE_PRESENTATION_TOTALS = {
   impressions: 4710000,
-  cost: 452265.24,
+  cost: 406290.11,
   clicks: 32621,
   viewable_impressions: 2171854,
   viewable_ctr: 46.11,
@@ -83,7 +83,7 @@ const DISPLAY_PRIORITY_LOCATIONS = [
 const DISPLAY_PRESENTATION_TOTALS = {
   impressions: 13487642,
   clicks: 12488,
-  cost: 446539.83,
+  cost: 401146.71,
   viewable_impressions: 11683342,
 };
 
@@ -425,6 +425,7 @@ function applyYoutubePresentationOverrides(periodId) {
   });
 
   alignYoutubePlacementTotals(periodId);
+  alignYoutubeAdTotals(periodId);
 
   const locationStmt = db.prepare(`
     INSERT INTO location_metrics (
@@ -474,6 +475,40 @@ function applyYoutubePresentationOverrides(periodId) {
   }
 
   alignYoutubeLocationTotals(periodId);
+}
+
+function alignYoutubeAdTotals(periodId) {
+  const rows = db.prepare(`
+    SELECT id, impressions, clicks, cost, viewable_impressions
+    FROM ad_creatives
+    WHERE period_id = ?
+    ORDER BY cost DESC, impressions DESC, id
+  `).all(periodId);
+  if (!rows.length) return;
+
+  const campaignTotals = db.prepare(`
+    SELECT ROUND(SUM(cost), 2) AS cost
+    FROM campaign_metrics
+    WHERE period_id = ?
+  `).get(periodId);
+  const targetCost = campaignTotals?.cost || YOUTUBE_PRESENTATION_TOTALS.cost;
+  const costs = distributeMetric(rows, (row) => row.cost || row.impressions || 0, targetCost, 2);
+
+  const update = db.prepare(`
+    UPDATE ad_creatives
+    SET cost = @cost,
+        avg_cpm = CASE WHEN impressions = 0 THEN 0 ELSE ROUND(@cost * 1000.0 / impressions, 2) END,
+        avg_cpc = CASE WHEN clicks = 0 THEN 0 ELSE ROUND(@cost / clicks, 2) END,
+        avg_viewable_cpm = CASE WHEN viewable_impressions IS NULL OR viewable_impressions = 0 THEN NULL ELSE ROUND(@cost * 1000.0 / viewable_impressions, 2) END
+    WHERE id = @id
+  `);
+
+  rows.forEach((row) => {
+    update.run({
+      id: row.id,
+      cost: costs.get(row.id) || 0,
+    });
+  });
 }
 
 function alignYoutubePlacementTotals(periodId) {
