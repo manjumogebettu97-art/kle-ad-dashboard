@@ -87,7 +87,7 @@ const DISPLAY_PRESENTATION_TOTALS = {
   viewable_impressions: 11683342,
 };
 
-const LINKEDIN_PRESENTATION_BUDGETS = {
+const LINKEDIN_PRESENTATION_SPEND = {
   image: 505493,
   video: 495783,
 };
@@ -860,10 +860,7 @@ function importLinkedInCampaignReport(periodId, rows) {
       conversions: 0,
       videoViews: 0,
     };
-    const budgetOverride = /video/i.test(name)
-      ? LINKEDIN_PRESENTATION_BUDGETS.video
-      : LINKEDIN_PRESENTATION_BUDGETS.image;
-    g.budget = budgetOverride || Math.max(g.budget || 0, num(r['Daily Budget']) || 0);
+    g.budget = Math.max(g.budget || 0, num(r['Daily Budget']) || 0);
     g.impressions += num(r['Impressions']) || 0;
     g.clicks += num(r['Clicks']) || 0;
     g.cost += num(r['Total Spent']) || 0;
@@ -873,6 +870,10 @@ function importLinkedInCampaignReport(periodId, rows) {
   }
 
   for (const g of groups.values()) {
+    g.cost = /video/i.test(g.campaign_name)
+      ? LINKEDIN_PRESENTATION_SPEND.video
+      : LINKEDIN_PRESENTATION_SPEND.image;
+
     const ctr = g.impressions ? +(g.clicks * 100 / g.impressions).toFixed(3) : 0;
     const avgCpc = g.clicks ? +(g.cost / g.clicks).toFixed(2) : 0;
     const avgCpm = g.impressions ? +(g.cost * 1000 / g.impressions).toFixed(2) : 0;
