@@ -93,6 +93,9 @@ function generateYoutubeDaily(period, totals) {
 
   return dates.map((date, index) => {
     const viewRate = impressions[index] ? views[index] * 100 / impressions[index] : 0;
+    const cpc = clicks[index] ? costs[index] / clicks[index] : 0;
+    const cpm = impressions[index] ? costs[index] * 1000 / impressions[index] : 0;
+    const cpv = views[index] ? costs[index] / views[index] : 0;
     return {
       date,
       impressions: impressions[index],
@@ -100,6 +103,9 @@ function generateYoutubeDaily(period, totals) {
       cost: costs[index],
       viewable_impressions: views[index],
       view_rate: Number(viewRate.toFixed(2)),
+      avg_cpc: Number(cpc.toFixed(2)),
+      avg_cpm: Number(cpm.toFixed(2)),
+      avg_cpv: Number(cpv.toFixed(2)),
     };
   });
 }

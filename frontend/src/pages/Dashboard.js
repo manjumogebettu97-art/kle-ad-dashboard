@@ -1740,12 +1740,16 @@ function buildEvenDailyRows(period, totals) {
 
   return dates.map((date, index) => {
     const ctr = impressions[index] ? clicks[index] * 100 / impressions[index] : 0;
+    const cpc = clicks[index] ? costs[index] / clicks[index] : 0;
+    const cpm = impressions[index] ? costs[index] * 1000 / impressions[index] : 0;
     return {
       date,
       impressions: impressions[index],
       clicks: clicks[index],
       cost: costs[index],
       ctr: Number(ctr.toFixed(2)),
+      avg_cpc: Number(cpc.toFixed(2)),
+      avg_cpm: Number(cpm.toFixed(2)),
     };
   });
 }
@@ -2117,6 +2121,7 @@ function buildLinkedInImageDailyRows(period, totals, reachTotal) {
     dwell_time: Number((LINKEDIN_DWELL_TIME * dwellWeights[index]).toFixed(2)),
     ctr: impressions[index] ? Number((clicks[index] * 100 / impressions[index]).toFixed(4)) : 0,
     cpc: clicks[index] ? Number((costs[index] / clicks[index]).toFixed(2)) : 0,
+    cpm: impressions[index] ? Number((costs[index] * 1000 / impressions[index]).toFixed(2)) : 0,
   }));
 }
 
