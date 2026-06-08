@@ -161,7 +161,6 @@ router.get('/campaigns', (req, res) => {
       cm.campaign_name,
       cm.campaign_status,
       cm.status_detail,
-      cm.budget,
       cm.impressions,
       cm.clicks,
       cm.cost,

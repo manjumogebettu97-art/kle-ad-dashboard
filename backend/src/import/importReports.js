@@ -198,8 +198,8 @@ function importCampaignReport(periodId, rows) {
       campaign_name: name,
       campaign_status: 'Paused',
       status_detail: r['Status'] || null,
-      budget: num(r['Budget']),
-      budget_type: r['Budget type'] || null,
+      budget: null,
+      budget_type: null,
       optimization_score: num(r['Optimization score']),
       impressions: impr ?? 0,
       clicks: clicks ?? 0,
@@ -887,15 +887,14 @@ function importLinkedInCampaignReport(periodId, rows) {
       campaign_name: name,
       campaign_status: 'Paused',
       status_detail: r['Campaign Objective Type'] || r['Ad Set Objective'] || null,
-      budget: 0,
-      budget_type: r['Cost Type'] || null,
+      budget: null,
+      budget_type: null,
       impressions: 0,
       clicks: 0,
       cost: 0,
       conversions: 0,
       videoViews: 0,
     };
-    g.budget = Math.max(g.budget || 0, num(r['Daily Budget']) || 0);
     g.impressions += num(r['Impressions']) || 0;
     g.clicks += num(r['Clicks']) || 0;
     g.cost += num(r['Total Spent']) || 0;
@@ -919,8 +918,8 @@ function importLinkedInCampaignReport(periodId, rows) {
       campaign_name: g.campaign_name,
       campaign_status: g.campaign_status,
       status_detail: g.status_detail,
-      budget: g.budget || null,
-      budget_type: g.budget_type,
+      budget: null,
+      budget_type: null,
       optimization_score: null,
       impressions: g.impressions,
       clicks: g.clicks,
@@ -1494,6 +1493,7 @@ function main() {
     if (r) results.push(r);
     console.log('');
   }
+  db.prepare('UPDATE campaign_metrics SET budget = NULL, budget_type = NULL').run();
   console.log('Summary:');
   for (const r of results) {
     console.log(`  ${r.platform}/${r.sub_platform}  [${r.periodLabel}]  campaigns=${r.campaigns}  locations=${r.locations}  placements=${r.placements}  ads=${r.ads}`);
