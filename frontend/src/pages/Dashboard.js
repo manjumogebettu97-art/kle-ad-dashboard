@@ -299,14 +299,24 @@ export default function Dashboard() {
   const isLinkedInImageView = activeView?.platform === 'linkedin' && activeView?.sub_platform === 'image';
   const isLinkedInVideoView = activeView?.platform === 'linkedin' && activeView?.sub_platform === 'video';
   const displayDailyRows = isGoogleDisplayView ? buildDisplayDailyRows(activePeriod, summary?.total || {}) : [];
-  const metricFactors = isYoutubeView ? dailyMetricFactors(dailyRows, rangeStartDate, rangeEndDate) : null;
+  const linkedInDailyRows = isLinkedInImageView
+    ? buildLinkedInImageDailyRows(activePeriod, summary?.total || {}, LINKEDIN_PRESENTATION_REACH)
+    : isLinkedInVideoView
+      ? buildLinkedInVideoDailyRows(activePeriod, summary?.total || {}, LINKEDIN_VIDEO_REACH)
+      : [];
+  const linkedInMetricFactors = isLinkedInView
+    ? dailyMetricFactors(linkedInDailyRows, rangeStartDate, rangeEndDate)
+    : null;
+  const metricFactors = isYoutubeView
+    ? dailyMetricFactors(dailyRows, rangeStartDate, rangeEndDate)
+    : linkedInMetricFactors;
   const total = scaleMetricRowWithFactors(summary?.total || {}, metricFactors, rangeFactor);
   const linkedInSummaryTotal = isLinkedInView ? scaleMetricRow(linkedInSummary?.total || {}, rangeFactor) : null;
   const linkedInVideoSummary = isLinkedInView
     ? scaleMetricRow((linkedInSummary?.platforms || []).find((row) => row.sub_platform === 'video') || {}, rangeFactor)
     : null;
   const linkedInReach = isLinkedInView
-    ? scaleNumber(isLinkedInVideoView ? LINKEDIN_VIDEO_REACH : LINKEDIN_PRESENTATION_REACH, rangeFactor)
+    ? scaleNumber(isLinkedInVideoView ? LINKEDIN_VIDEO_REACH : LINKEDIN_PRESENTATION_REACH, linkedInMetricFactors?.reach ?? rangeFactor)
     : 0;
   const rangeCampaigns = campaigns.map((campaign) => scaleMetricRowWithFactors(campaign, metricFactors, rangeFactor));
   const totalViews = metricFactors
@@ -426,8 +436,7 @@ export default function Dashboard() {
           imageTotal={total}
           reach={linkedInReach}
           ads={rangeAds}
-          period={activePeriod}
-          rawTotal={summary?.total || {}}
+          dailyRows={linkedInDailyRows}
           startDate={rangeStartDate}
           endDate={rangeEndDate}
           selectedDays={selectedDays}
@@ -439,8 +448,7 @@ export default function Dashboard() {
           total={total}
           reach={linkedInReach}
           ads={rangeAds}
-          period={activePeriod}
-          rawTotal={summary?.total || {}}
+          dailyRows={linkedInDailyRows}
           startDate={rangeStartDate}
           endDate={rangeEndDate}
           rangeFactor={rangeFactor}
@@ -628,15 +636,14 @@ function LinkedInImageDashboard({
   imageTotal,
   reach,
   ads,
-  period,
-  rawTotal,
+  dailyRows,
   startDate,
   endDate,
   selectedDays,
   rangeFactor,
   currency,
 }) {
-  const chartRows = buildLinkedInImageDailyRows(period, rawTotal, LINKEDIN_PRESENTATION_REACH);
+  const chartRows = dailyRows || [];
   const topAdSet = buildLinkedInTopAdSet(ads, selectedDays, rangeFactor);
   const adSetRows = buildLinkedInAdSetRows(ads, imageTotal, selectedDays, rangeFactor);
   const topAds = buildLinkedInTopImageAds(ads, reach, rangeFactor);
@@ -671,14 +678,13 @@ function LinkedInVideoDashboard({
   total,
   reach,
   ads,
-  period,
-  rawTotal,
+  dailyRows,
   startDate,
   endDate,
   rangeFactor,
   currency,
 }) {
-  const chartRows = buildLinkedInVideoDailyRows(period, rawTotal, LINKEDIN_VIDEO_REACH);
+  const chartRows = dailyRows || [];
   const videoViews = total.viewable_impressions || 0;
   const cpv = videoViews ? total.cost / videoViews : null;
   const topVideoAds = buildLinkedInTopVideoAds(ads, reach, rangeFactor);

@@ -1075,6 +1075,68 @@ function importLinkedInPlacementReport(periodId, rows) {
   return groups.size;
 }
 
+function linkedInTargetSpend(periodId) {
+  const row = db.prepare(`
+    SELECT ROUND(SUM(cost), 2) AS cost
+    FROM campaign_metrics
+    WHERE period_id = ?
+  `).get(periodId);
+  return row?.cost || 0;
+}
+
+function alignLinkedInAdTotals(periodId) {
+  const rows = db.prepare(`
+    SELECT id, impressions, clicks, cost, conversions
+    FROM ad_creatives
+    WHERE period_id = ?
+    ORDER BY cost DESC, impressions DESC, id
+  `).all(periodId);
+  if (!rows.length) return;
+
+  const costs = distributeMetric(rows, (row) => row.cost || row.impressions || 0, linkedInTargetSpend(periodId), 2);
+  const update = db.prepare(`
+    UPDATE ad_creatives
+    SET cost = @cost,
+        avg_cpm = CASE WHEN impressions = 0 THEN 0 ELSE ROUND(@cost * 1000.0 / impressions, 2) END,
+        avg_cpc = CASE WHEN clicks = 0 THEN 0 ELSE ROUND(@cost / clicks, 2) END,
+        cost_per_conv = CASE WHEN conversions = 0 THEN 0 ELSE ROUND(@cost / conversions, 2) END
+    WHERE id = @id
+  `);
+
+  rows.forEach((row) => {
+    update.run({
+      id: row.id,
+      cost: costs.get(row.id) || 0,
+    });
+  });
+}
+
+function alignLinkedInPlacementTotals(periodId) {
+  const rows = db.prepare(`
+    SELECT id, impressions, cost, trueview_views
+    FROM placement_metrics
+    WHERE period_id = ?
+    ORDER BY cost DESC, impressions DESC, id
+  `).all(periodId);
+  if (!rows.length) return;
+
+  const costs = distributeMetric(rows, (row) => row.cost || row.impressions || 0, linkedInTargetSpend(periodId), 2);
+  const update = db.prepare(`
+    UPDATE placement_metrics
+    SET cost = @cost,
+        avg_cpm = CASE WHEN impressions = 0 THEN 0 ELSE ROUND(@cost * 1000.0 / impressions, 2) END,
+        trueview_cpv = CASE WHEN trueview_views IS NULL OR trueview_views = 0 THEN NULL ELSE ROUND(@cost / trueview_views, 2) END
+    WHERE id = @id
+  `);
+
+  rows.forEach((row) => {
+    update.run({
+      id: row.id,
+      cost: costs.get(row.id) || 0,
+    });
+  });
+}
+
 function linkedInPlacementType(placement) {
   if (/audience network/i.test(placement)) return 'Audience Network';
   if (/linkedin/i.test(placement)) return 'LinkedIn';
@@ -1225,6 +1287,11 @@ function importLinkedInSplitFolder(folderName, files) {
     } else {
       console.log(`  ? ${file}: unknown report type "${parsed.title}" (skipped)`);
     }
+  }
+
+  for (const period of Object.values(periodsByType)) {
+    alignLinkedInAdTotals(period.id);
+    alignLinkedInPlacementTotals(period.id);
   }
 
   return {

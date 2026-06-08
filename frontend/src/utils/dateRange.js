@@ -52,7 +52,7 @@ export function scaleMetricRow(row = {}, factor = 1) {
 
 export function dailyMetricFactors(rows, startDate, endDate) {
   if (!rows?.length || !startDate || !endDate) return null;
-  const fields = ['impressions', 'clicks', 'cost', 'viewable_impressions'];
+  const fields = ['impressions', 'clicks', 'cost', 'viewable_impressions', 'reach'];
   const totals = fields.reduce((acc, field) => ({ ...acc, [field]: 0 }), {});
   const selected = fields.reduce((acc, field) => ({ ...acc, [field]: 0 }), {});
 
