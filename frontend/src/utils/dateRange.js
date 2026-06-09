@@ -2,6 +2,9 @@ import { platformLabel } from './format';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+export const REPORT_START_DATE = '2026-03-01';
+export const REPORT_END_DATE = '2026-05-12';
+
 export function toDateValue(value) {
   return value ? String(value).slice(0, 10) : '';
 }
@@ -125,8 +128,10 @@ function recalculateDerivedMetrics(row) {
 }
 
 export function buildRangeMeta(period, selectedStart, selectedEnd) {
-  const minDate = toDateValue(period?.start_date);
-  const maxDate = toDateValue(period?.end_date);
+  const sourceStartDate = toDateValue(period?.start_date);
+  const sourceEndDate = toDateValue(period?.end_date);
+  const minDate = sourceStartDate ? REPORT_START_DATE : '';
+  const maxDate = sourceEndDate ? REPORT_END_DATE : '';
   const startDate = clampDateValue(selectedStart || minDate, minDate, maxDate);
   const endDate = clampDateValue(selectedEnd || maxDate, startDate || minDate, maxDate);
   const selectedDays = daysInclusive(startDate, endDate);

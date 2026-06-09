@@ -8,7 +8,7 @@ import DateRangePanel from '../components/DateRangePanel';
 import AdTypeTabs from '../components/AdTypeTabs';
 import { usePlatform } from '../context/PlatformContext';
 import { fmt, money, pctOrDash, cleanLocation, platformLabel } from '../utils/format';
-import { buildRangeMeta, clampDateValue, dailyMetricFactors, scaleMetricRow, scaleNumber, toDateValue } from '../utils/dateRange';
+import { REPORT_END_DATE, REPORT_START_DATE, buildRangeMeta, clampDateValue, dailyMetricFactors, scaleMetricRow, scaleNumber } from '../utils/dateRange';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -150,8 +150,8 @@ export default function Locations() {
 
   const platformPeriods = periods.filter((p) => p.platform === platform);
   const selected = periods.find((p) => String(p.id) === periodId);
-  const importedStartDate = toDateValue(selected?.start_date);
-  const importedEndDate = toDateValue(selected?.end_date);
+  const importedStartDate = selected ? REPORT_START_DATE : '';
+  const importedEndDate = selected ? REPORT_END_DATE : '';
 
   useEffect(() => {
     const firstWithLocations = platformPeriods.find((p) => p.location_count > 0) || platformPeriods[0];

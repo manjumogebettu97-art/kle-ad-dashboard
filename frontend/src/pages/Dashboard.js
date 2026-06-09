@@ -13,6 +13,8 @@ import TooltipValue from '../components/TooltipValue';
 import { usePlatform } from '../context/PlatformContext';
 import { fmt, money, pct, compact, compactMoney, platformLabel, cleanLocation } from '../utils/format';
 import {
+  REPORT_END_DATE,
+  REPORT_START_DATE,
   buildRangeMeta,
   clampDateValue,
   dailyMetricFactors,
@@ -222,8 +224,8 @@ export default function Dashboard() {
   const activeViewKey = selectedAdType ? `${platform}:${selectedAdType}` : '';
   const activeView = availableViews.find((view) => view.key === activeViewKey);
   const activePeriod = viewPeriods.find((period) => activeView && viewKey(period) === activeView.key);
-  const importedStartDate = toDateValue(activePeriod?.start_date);
-  const importedEndDate = toDateValue(activePeriod?.end_date);
+  const importedStartDate = activePeriod ? REPORT_START_DATE : '';
+  const importedEndDate = activePeriod ? REPORT_END_DATE : '';
 
   // Default-select the first available platform/ad-type when periods first load.
   useEffect(() => {
@@ -299,6 +301,7 @@ export default function Dashboard() {
   const isLinkedInImageView = activeView?.platform === 'linkedin' && activeView?.sub_platform === 'image';
   const isLinkedInVideoView = activeView?.platform === 'linkedin' && activeView?.sub_platform === 'video';
   const displayDailyRows = isGoogleDisplayView ? buildDisplayDailyRows(activePeriod, summary?.total || {}) : [];
+  const youtubeDailyRows = isYoutubeView ? buildYoutubeDailyRows(summary?.total || {}) : [];
   const linkedInDailyRows = isLinkedInImageView
     ? buildLinkedInImageDailyRows(activePeriod, summary?.total || {}, LINKEDIN_PRESENTATION_REACH)
     : isLinkedInVideoView
@@ -308,7 +311,7 @@ export default function Dashboard() {
     ? dailyMetricFactors(linkedInDailyRows, rangeStartDate, rangeEndDate)
     : null;
   const metricFactors = isYoutubeView
-    ? dailyMetricFactors(dailyRows, rangeStartDate, rangeEndDate)
+    ? dailyMetricFactors(youtubeDailyRows, rangeStartDate, rangeEndDate)
     : linkedInMetricFactors;
   const total = scaleMetricRowWithFactors(summary?.total || {}, metricFactors, rangeFactor);
   const linkedInSummaryTotal = isLinkedInView ? scaleMetricRow(linkedInSummary?.total || {}, rangeFactor) : null;
@@ -495,9 +498,9 @@ export default function Dashboard() {
             </div>
           )}
 
-          {isYoutubeView && dailyRows.length > 0 && (
+          {isYoutubeView && youtubeDailyRows.length > 0 && (
             <GooglePerformanceChart
-              rows={dailyRows}
+              rows={youtubeDailyRows}
               startDate={rangeStartDate}
               endDate={rangeEndDate}
               currency={currency}
@@ -1767,19 +1770,58 @@ function distributeEvenMoney(total, count) {
     .map((cents) => Number((cents / 100).toFixed(2)));
 }
 
-function buildDisplayDailyRows(period, totals) {
-  const start = toDateValue(period?.start_date);
-  const end = toDateValue(period?.end_date);
-  const days = daysInclusive(start, end);
-  if (!days) return [];
-
+function campaignDates() {
   const dates = [];
-  let current = new Date(`${start}T00:00:00Z`);
-  const last = new Date(`${end}T00:00:00Z`);
+  let current = new Date(`${REPORT_START_DATE}T00:00:00Z`);
+  const last = new Date(`${REPORT_END_DATE}T00:00:00Z`);
   while (current <= last) {
     dates.push(current.toISOString().slice(0, 10));
     current = new Date(current.getTime() + 24 * 60 * 60 * 1000);
   }
+  return dates;
+}
+
+function buildYoutubeDailyRows(totals) {
+  const dates = campaignDates();
+  if (!dates.length) return [];
+
+  const impressionWeights = dates.map((_, index) => {
+    const progress = index / Math.max(dates.length - 1, 1);
+    const launchRamp = index < 15 ? 0.08 + (index / 15) * 0.92 : 1;
+    const weeklyPulse = 1 + Math.sin(index * 0.78 + 0.4) * 0.16;
+    const midFlight = progress > 0.28 && progress < 0.72 ? 1.16 : 1;
+    const closingSoftening = progress > 0.86 ? 0.24 : 1;
+    return Math.max(0.04, launchRamp * weeklyPulse * midFlight * closingSoftening);
+  });
+  const viewWeights = impressionWeights.map((weight, index) => weight * (1 + Math.sin(index * 0.58 + 1.2) * 0.18));
+  const clickWeights = impressionWeights.map((weight, index) => weight * (1 + Math.sin(index * 0.48 + 0.7) * 0.2));
+  const costWeights = impressionWeights.map((weight, index) => weight * (1 + Math.sin(index * 0.36 + 1.1) * 0.14));
+
+  const impressions = distributeWeightedInteger(totals.impressions || 0, impressionWeights);
+  const views = distributeWeightedInteger(totals.viewable_impressions || 0, viewWeights);
+  const clicks = distributeWeightedInteger(totals.clicks || 0, clickWeights);
+  const costs = distributeWeightedMoney(totals.cost || 0, costWeights);
+
+  return dates.map((date, index) => {
+    const ctr = impressions[index] ? clicks[index] * 100 / impressions[index] : 0;
+    const cpc = clicks[index] ? costs[index] / clicks[index] : 0;
+    const cpm = impressions[index] ? costs[index] * 1000 / impressions[index] : 0;
+    return {
+      date,
+      impressions: impressions[index],
+      viewable_impressions: views[index],
+      clicks: clicks[index],
+      cost: costs[index],
+      ctr: Number(ctr.toFixed(2)),
+      avg_cpc: Number(cpc.toFixed(2)),
+      avg_cpm: Number(cpm.toFixed(2)),
+    };
+  });
+}
+
+function buildDisplayDailyRows(period, totals) {
+  const dates = campaignDates();
+  if (!dates.length) return [];
 
   const impressionWeights = dates.map((_, index) => {
     const progress = index / Math.max(dates.length - 1, 1);

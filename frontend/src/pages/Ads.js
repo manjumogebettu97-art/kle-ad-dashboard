@@ -4,7 +4,7 @@ import DateRangePanel from '../components/DateRangePanel';
 import AdTypeTabs from '../components/AdTypeTabs';
 import { usePlatform } from '../context/PlatformContext';
 import { fmt, money, pctOrDash, platformLabel } from '../utils/format';
-import { buildRangeMeta, clampDateValue, dailyMetricFactors, scaleMetricRowWithFactors, toDateValue } from '../utils/dateRange';
+import { REPORT_END_DATE, REPORT_START_DATE, buildRangeMeta, clampDateValue, dailyMetricFactors, scaleMetricRowWithFactors } from '../utils/dateRange';
 
 const COLS = [
   { key: 'ad_name',           label: 'Ad',                stick: true },
@@ -45,8 +45,8 @@ export default function Ads() {
 
   const platformPeriods = periods.filter((p) => p.platform === platform);
   const selected = periods.find((p) => String(p.id) === periodId);
-  const importedStartDate = toDateValue(selected?.start_date);
-  const importedEndDate = toDateValue(selected?.end_date);
+  const importedStartDate = selected ? REPORT_START_DATE : '';
+  const importedEndDate = selected ? REPORT_END_DATE : '';
 
   useEffect(() => {
     if (platformPeriods.length === 0) {
